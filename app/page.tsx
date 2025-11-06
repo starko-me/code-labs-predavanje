@@ -7,6 +7,15 @@ import {
   ConversationScrollButton,
 } from '@/components/ai-elements/conversation';
 import { Message, MessageContent } from '@/components/ai-elements/message';
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 import {
   PromptInput,
   PromptInputActionAddAttachments,
@@ -84,16 +93,17 @@ export default function Chat() {
     setInput('');
   };
 
-  
+
   return (
-    <div className="max-w-4xl mx-auto p-6 relative size-full h-screen">
+    <div className="max-w-7xl mx-auto p-6 relative size-full h-screen">
       <div className="flex flex-col h-full">
         <Conversation className="h-full">
           <ConversationContent>
             {messages.map((message) => (
               <div key={message.id}>
                 {message.role === 'assistant' && message.parts.filter((part) => part.type === 'source-url').length > 0 && (
-                  <Sources>
+                 
+                 <Sources>
                     <SourcesTrigger
                       count={
                         message.parts.filter(
@@ -112,9 +122,14 @@ export default function Chat() {
                     ))}
                   </Sources>
                 )}
+
                 {message.parts.map((part, i) => {
                   switch (part.type) {
+                   
+                  
+                    
                     case 'text':
+                      console.log(part,'part');
                       return (
                         <Fragment key={`${message.id}-${i}`}>
                           <Message from={message.role}>
@@ -156,9 +171,65 @@ export default function Chat() {
                         </Reasoning>
                       );
                     default:
+                      console.log(part,'part');
                       return null;
                   }
                 })}
+                { status === 'ready' &&   message.parts.filter((part) => part.type === 'tool-getAllProducts').map((part: any, i)=>{
+                    const products = Array.isArray(part.output) ? part.output : [];
+                    return (
+                      <div key={`${message.id}-${i}`} className="my-4 max-w-5xl mx-auto">
+                        <h3 className="text-lg font-semibold mb-4">Products ({products.length})</h3>
+                        {products.length > 0 ? (
+                          <Carousel className="w-full">
+                            <CarouselContent>
+                              {products.map((product: any, idx: number) => (
+                                <CarouselItem key={product?.id || idx} className="md:basis-1/2 lg:basis-1/3">
+                                  <Card className="h-full">
+                                    <div className="aspect-square overflow-hidden rounded-t-xl">
+                                      {product?.image && (
+                                        <img
+                                          src={product.image}
+                                          alt={product?.title || 'Product'}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      )}
+                                    </div>
+                                    <CardHeader>
+                                      <CardTitle className="line-clamp-2">{product?.title || 'Untitled Product'}</CardTitle>
+                                      <CardDescription className="line-clamp-2">
+                                        {product?.description || 'No description available'}
+                                      </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-2xl font-bold">${product?.price?.toFixed(2) || '0.00'}</span>
+                                        {product?.rating && (
+                                          <span className="text-sm text-muted-foreground">
+                                            ⭐ {product.rating.rate} ({product.rating.count})
+                                          </span>
+                                        )}
+                                      </div>
+                                      {product?.category && (
+                                        <span className="text-xs text-muted-foreground mt-2 block capitalize">
+                                          {product.category}
+                                        </span>
+                                      )}
+                                    </CardContent>
+                                  </Card>
+                                </CarouselItem>
+                              ))}
+                            </CarouselContent>
+                            <CarouselPrevious />
+                            <CarouselNext />
+                          </Carousel>
+                        ) : (
+                          <p className="text-muted-foreground">No products found</p>
+                        )}
+                      </div>
+                    );
+                  })
+                }
               </div>
             ))}
             {status === 'submitted' && <Loader />}
